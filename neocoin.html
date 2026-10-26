@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b0f1a">
+<title>NeoCoin Arena — Game Penghasil Koin (Simulasi)</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#121a2b; --panel2:#0e1524; --line:rgba(148,163,184,.15);
+    --txt:#e6ecff; --mut:#8b98b8; --acc:#22d3ee; --acc2:#a78bfa; --gold:#fbbf24;
+    --ok:#34d399; --bad:#f87171; --r:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, rgba(124,58,237,.18), transparent 60%),
+               radial-gradient(900px 500px at -10% 20%, rgba(8,145,178,.15), transparent 60%), var(--bg);
+    color:var(--txt); font-family:'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    padding-bottom:84px;
+  }
+  body.lock{overflow:hidden}
+  .app{max-width:520px;margin:0 auto;padding:0 14px}
+
+  /* ===== Topbar ===== */
+  .topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(10px);
+    background:rgba(11,15,26,.82);border-bottom:1px solid var(--line)}
+  .topbar .app{display:flex;align-items:center;gap:10px;height:58px}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:.3px}
+  .brand .logo{width:28px;height:28px;border-radius:9px;background:conic-gradient(from 0deg,#22d3ee,#a78bfa,#fbbf24,#22d3ee);
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#0b0f1a;font-weight:900}
+  .chip-sim{font-size:10px;font-weight:800;letter-spacing:.8px;color:#0b0f1a;background:var(--gold);
+    padding:3px 8px;border-radius:999px}
+  .chip-koin{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--panel);
+    border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:800;font-size:13px}
+  .coin-dot{width:14px;height:14px;border-radius:50%;display:inline-block;
+    background:radial-gradient(circle at 35% 35%,#fde68a,#f59e0b 60%,#b45309);box-shadow:0 0 6px rgba(251,191,36,.6)}
+
+  /* ===== Cards & sections ===== */
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:var(--r);padding:16px;margin-top:14px}
+  .card h3{font-size:14px;margin-bottom:10px;color:#c7d2fe;letter-spacing:.3px}
+  .hero{margin-top:14px;border-radius:20px;padding:20px 18px;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(167,139,250,.16));border:1px solid rgba(167,139,250,.35)}
+  .hero:before{content:"";position:absolute;inset:-40% -20% auto auto;width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle,rgba(34,211,238,.25),transparent 70%)}
+  .hero .lbl{font-size:11px;color:var(--mut);letter-spacing:1px;font-weight:700}
+  .hero .coins{font-size:34px;font-weight:900;display:flex;align-items:center;gap:10px;margin:6px 0 2px}
+  .hero .coins .coin-dot{width:24px;height:24px}
+  .hero .rp{font-size:14px;color:#a5f3fc;font-weight:700}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
+    font-weight:800;font-size:14px;border-radius:12px;padding:12px 18px;color:#06121a;
+    background:linear-gradient(90deg,#22d3ee,#a78bfa);transition:transform .12s, filter .2s;touch-action:manipulation}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  .btn.gold{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+  .btn.small{padding:8px 12px;font-size:12px;border-radius:10px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;align-items:center}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:16px}
+  .stat span{font-size:10.5px;color:var(--mut)}
+
+  /* ===== Game tiles ===== */
+  .glist{display:grid;gap:12px;margin-top:12px}
+  .gtile{display:flex;gap:14px;align-items:center;background:var(--panel2);border:1px solid var(--line);
+    border-radius:16px;padding:14px}
+  .gicon{width:58px;height:58px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center}
+  .gi-spin{background:linear-gradient(135deg,#7c3aed,#0ea5e9)}
+  .gi-card{background:linear-gradient(135deg,#0f766e,#22d3ee)}
+  .gi-ship{background:linear-gradient(135deg,#be185d,#7c3aed)}
+  .gtile b{display:block;font-size:15px;margin-bottom:3px}
+  .gtile p{font-size:12px;color:var(--mut);line-height:1.45}
+  .gtile .tag{display:inline-block;margin-top:6px;font-size:10.5px;font-weight:700;color:#a5f3fc;
+    background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);padding:2px 8px;border-radius:999px}
+
+  .bar{height:10px;background:#1e293b;border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#22d3ee,#a78bfa);transition:width .5s}
+  .mut{color:var(--mut)} .small{font-size:12px}
+
+  /* ===== Bottom nav ===== */
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(11,15,26,.92);backdrop-filter:blur(12px);
+    border-top:1px solid var(--line)}
+  .nav .app{display:grid;grid-template-columns:repeat(4,1fr)}
+  .nav button{background:none;border:none;color:var(--mut);padding:9px 0 10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700}
+  .nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .nav button.on{color:var(--acc)}
+  .pages section{display:none} .pages section.on{display:block}
+
+  /* ===== Modals ===== */
+  .ovl{position:fixed;inset:0;z-index:100;background:rgba(4,7,14,.72);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:18px}
+  .ovl.on{display:flex}
+  .modal{width:100%;max-width:400px;background:linear-gradient(180deg,#151d31,#0e1524);
+    border:1px solid var(--line);border-radius:20px;padding:20px;max-height:88vh;overflow:auto}
+  .modal h2{font-size:18px;margin-bottom:6px}
+  .gmodal{position:fixed;inset:0;z-index:90;background:#070b14;display:none;flex-direction:column}
+  .gmodal.on{display:flex}
+  .ghead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .ghead b{font-size:15px}
+  .xbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--txt);width:34px;height:34px;
+    border-radius:10px;font-size:16px;cursor:pointer;font-weight:800}
+
+  /* Wheel */
+  .wheelWrap{position:relative;width:290px;height:290px;margin:18px auto 8px}
+  #wheelRot{width:100%;height:100%;border-radius:50%;border:6px solid #1e293b;box-shadow:0 0 0 4px #0b0f1a,0 10px 40px rgba(124,58,237,.35);
+    position:relative;transition:transform 4.2s cubic-bezier(.12,.72,.06,1)}
+  .seglabel{position:absolute;left:50%;top:50%;width:52px;margin:-11px 0 0 -26px;text-align:center;
+    font-weight:900;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);border:4px solid #0b0f1a;color:#1f1300;font-weight:900;
+    font-size:15px;cursor:pointer;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,.5);touch-action:manipulation}
+  .hub:disabled{filter:grayscale(.6);opacity:.7}
+  .wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;z-index:6;
+    border:13px solid transparent;border-top:20px solid var(--gold);filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+
+  /* Cards game */
+  .cardTable{position:relative;width:300px;height:152px;margin:22px auto}
+  .pcard{position:absolute;top:16px;width:84px;height:120px;perspective:700px;cursor:pointer;transition:left .26s ease}
+  .pcard .inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .4s}
+  .pcard.flip .inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-weight:800}
+  .face.cover{background:repeating-linear-gradient(45deg,#1e3a8a,#1e3a8a 8px,#1e40af 8px,#1e40af 16px);
+    border:2px solid #60a5fa;color:#93c5fd}
+  .face.logo{transform:rotateY(180deg);background:linear-gradient(160deg,#f8fafc,#cbd5e1);color:#0f172a;font-size:32px}
+  .pcard.hint{outline:3px solid var(--gold);border-radius:12px}
+  .pcard.good{outline:3px solid var(--ok)} .pcard.badd{outline:3px solid var(--bad)}
+  .cardMsg{text-align:center;min-height:44px;font-weight:700;color:#c7d2fe;padding:0 10px}
+
+  /* Ship */
+  .shipHud{display:flex;gap:14px;justify-content:center;padding:10px;font-weight:800;font-size:13px}
+  .shipHud .life{width:12px;height:12px;border-radius:50%;background:#334155;display:inline-block;margin-left:4px}
+  .shipHud .life.on{background:var(--bad);box-shadow:0 0 8px rgba(248,113,113,.7)}
+  .shipArea{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+  #shipCanvas{width:min(94vw,400px);aspect-ratio:9/14;display:block;border-radius:14px;
+    border:1px solid var(--line);background:#05070f;touch-action:none}
+  .shipOvl{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(5,7,15,.85);border-radius:14px;text-align:center;padding:20px}
+  .shipOvl.on{display:flex}
+
+  /* Withdraw */
+  .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
+  .mbtn{background:var(--panel2);border:1.5px solid var(--line);border-radius:12px;padding:11px 6px;cursor:pointer;
+    color:var(--txt);font-weight:800;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:6px;touch-action:manipulation}
+  .mbtn .mi{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:900;color:#fff}
+  .mbtn.sel{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+  .fld{margin-top:10px}
+  .fld label{display:block;font-size:11.5px;color:var(--mut);margin-bottom:5px;font-weight:700}
+  .fld input,.fld select{width:100%;background:#0b1120;border:1px solid var(--line);border-radius:11px;
+    padding:12px;color:var(--txt);font-size:14px;outline:none}
+  .fld input:focus{border-color:var(--acc)}
+  .hist{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+  .hitem{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;padding:11px 12px}
+  .hitem b{font-size:13px;display:block}
+  .hitem .small{color:var(--mut)}
+  .st{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--ok);background:rgba(52,211,153,.12);
+    border:1px solid rgba(52,211,153,.35);padding:3px 8px;border-radius:999px;white-space:nowrap}
+
+  /* Mission */
+  .mcard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:13px;margin-top:10px}
+  .mcard .t{font-weight:800;font-size:13.5px}
+  .mcard .d{font-size:11.5px;color:var(--mut);margin:3px 0 8px}
+  .mrow{display:flex;align-items:center;gap:10px}
+  .mrow .bar{flex:1}
+  ol.vm{margin:8px 0 0 18px;display:flex;flex-direction:column;gap:9px}
+  ol.vm li{font-size:13px;line-height:1.55;color:#cbd5e1}
+  .note{border-left:3px solid var(--gold);background:rgba(251,191,36,.07);padding:11px 13px;border-radius:10px;
+    font-size:12px;line-height:1.6;color:#fde68a;margin-top:12px}
+  .ok-note{border-left-color:var(--acc);background:rgba(34,211,238,.07);color:#a5f3fc}
+
+  /* Toast */
+  #toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:200;opacity:0;
+    background:#0f1a30;border:1px solid rgba(34,211,238,.45);color:#a5f3fc;font-weight:800;font-size:13px;
+    padding:11px 18px;border-radius:999px;pointer-events:none;transition:all .3s;box-shadow:0 8px 30px rgba(0,0,0,.5);
+    display:flex;align-items:center;gap:8px;max-width:90vw}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .spin{width:18px;height:18px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--acc);border-radius:50%;
+    animation:sp 1s linear infinite;display:inline-block}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .shake{animation:shk .4s} @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+</style>
+</head>
+<body>
+
+<!-- ====== MODAL SIMULASI (first run) ====== -->
+<div class="ovl on" id="ovlIntro">
+  <div class="modal">
+    <div style="width:54px;height:54px;border-radius:16px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);
+      display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:var(--gold);margin-bottom:12px">!</div>
+    <h2>Mode Simulasi Edukasi</h2>
+    <p class="small mut" style="line-height:1.7;margin-top:8px">
+      Aplikasi ini adalah <b style="color:#fde68a">simulasi / demo hiburan &amp; literasi finansial</b>.
+      Seluruh koin, saldo, konversi Rupiah, dan proses penarikan bersifat <b style="color:#fde68a">virtual</b> —
+      tidak ada uang sungguhan yang diterima, dikirim, atau ditarik. Tidak ada deposit maupun data pembayaran asli yang diminta.
+    </p>
+    <button class="btn" style="width:100%;margin-top:16px" onclick="ackIntro()">Saya Mengerti — Mulai Bermain</button>
+  </div>
+</div>
+
+<!-- ====== TOPBAR ====== -->
+<header class="topbar">
+  <div class="app">
+    <div class="brand"><span class="logo">N</span>NeoCoin Arena</div>
+    <span class="chip-sim">SIMULASI</span>
+    <span class="chip-koin"><span class="coin-dot"></span><span id="koinTop">0</span> koin</span>
+  </div>
+</header>
+
+<div class="app pages">
+  <!-- ================= BERANDA ================= -->
+  <section id="pg-beranda" class="on">
+    <div class="hero">
+      <div class="lbl">SALDO KOIN ANDA</div>
+      <div class="coins"><span class="coin-dot"></span><span id="heroCoins">0</span></div>
+      <div class="rp" id="heroRp">≈ Rp0</div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn gold" style="flex:1" onclick="go('tarik')">Tarik Dana</button>
+        <button class="btn ghost" onclick="go('misi')">Misi Harian</button>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="stat"><b id="sSpin">0/5</b><span>Spin tersisa</span></div>
+      <div class="stat"><b id="sCard">0/3</b><span>Kartu tersisa</span></div>
+      <div class="stat"><b id="sShip">0/3</b><span>Pesawat tersisa</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Target Harian</h3>
+      <div class="row small" style="justify-content:space-between;margin-bottom:7px">
+        <span class="mut">Koin game hari ini</span><b id="homeDailyTxt">0 / 1.500</b>
+      </div>
+      <div class="bar"><i id="homeDailyBar" style="width:0%"></i></div>
+      <p class="small mut" style="margin-top:8px">1 koin = Rp25.000 (simulasi) • Target 1.500 koin ≈ Rp37.500.000</p>
+    </div>
+
+    <div class="card">
+      <h3>Pilih Game</h3>
+      <div class="glist">
+        <div class="gtile">
+          <div class="gicon gi-spin">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
+          </div>
+          <div style="flex:1">
+            <b>Lucky Spin</b>
+            <p>Putar roda keberuntungan. Koin hingga 100 per putaran.</p>
+            <span class="tag" id="tagSpin">5x per hari</span>
+          </div>
+          <button class="btn small" onclick="openSpin()">Main</button>
+        </div>
+        <div class="gtile">
+          <div class="gicon gi-card">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="5" width="10" height="15" rx="2"/><rect x="11" y="4" width="10" height="15" rx="2" fill="#0f766e" stroke="#fff"/><path d="M16 9.5v4M14.2 11.5h3.6"/></svg>
+          </div>
+          <div style="flex:1">
+            <b>Tebak Kartu AS</b>
+            <p>Ikuti kartu AS saat kartu diacak. 3 ronde, 3 kali main per hari.</p>
+            <span class="tag" id="tagCard">Sampai +36 koin / main</span>
+          </div>
+          <button class="btn small" onclick="openCards()">Main</button>
+        </div>
+        <div class="gtile">
+          <div class="gicon gi-ship">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 2c3 3 4 7 4 11l-4 4-4-4c0-4 1-8 4-11z"/><circle cx="12" cy="10" r="1.6"/><path d="M8 17l-2 4M16 17l2 4M12 18v4"/></svg>
+          </div>
+          <div style="flex:1">
+            <b>Pesawat Antariksa</b>
+            <p>Hancurkan musuh, tepung koin jatuh. 3 sesi per hari.</p>
+            <span class="tag" id="tagShip">Koin tiap 4 musuh</span>
+          </div>
+          <button class="btn small" onclick="openShip()">Main</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Misi Unggulan Hari Ini</h3>
+      <div id="prevMissions"></div>
+      <button class="btn ghost" style="width:100%;margin-top:10px" onclick="go('misi')">Lihat Semua Misi</button>
+    </div>
+  </section>
+
+  <!-- ================= MISI ================= -->
+  <section id="pg-misi">
+    <div class="card">
+      <h3>Progres Target Harian</h3>
+      <div class="row small" style="justify-content:space-between;margin-bottom:7px">
+        <span class="mut">1.500 koin</span><b id="dailyTxt">0 / 1.500</b>
+      </div>
+      <div class="bar"><i id="dailyBar" style="width:0%"></i></div>
+      <p class="small mut" style="margin-top:8px">Selesaikan misi di bawah untuk mempercepat pencapaian target harian Anda.</p>
+    </div>
+    <div id="missionList"></div>
+    <div class="note ok-note" style="margin-top:14px">Bonus misi langsung masuk ke saldo koin Anda setelah diklaim dan ikut dihitung dalam total koin harian.</div>
+  </section>
+
+  <!-- ================= TARIK DANA ================= -->
+  <section id="pg-tarik">
+    <div class="hero">
+      <div class="lbl">SALDO DAPAT DITARIK</div>
+      <div class="coins"><span class="coin-dot"></span><span id="wdCoins">0</span> koin</div>
+      <div class="rp" id="wdRp">≈ Rp0</div>
+      <p class="small" style="margin-top:8px;color:#a5f3fc">Minimal penarikan: <b>25 koin (Rp625.000)</b> • Biaya admin <b>Rp0</b></p>
+    </div>
+
+    <div class="card">
+      <h3>1. Pilih Metode Penarikan</h3>
+      <div class="mgrid" id="methodGrid"></div>
+    </div>
+
+    <div class="card" id="wdFormCard" style="display:none">
+      <h3 id="wdFormTitle">2. Data Tujuan</h3>
+      <div id="wdForm"></div>
+      <div id="wdMsg" class="small" style="color:var(--bad);margin-top:8px;display:none"></div>
+      <button class="btn gold" style="width:100%;margin-top:14px" id="btnSubmit" onclick="submitWd()">Ajukan Penarikan</button>
+    </div>
+
+    <div class="card">
+      <h3>Riwayat Penarikan</h3>
+      <div class="hist" id="wdHistory"></div>
+    </div>
+
+    <div class="note">Semua penarikan pada aplikasi ini adalah <b>simulasi</b>. Tidak ada dana nyata yang dikirim ke rekening, e-wallet, QRIS, maupun kasir gerai ritel.</div>
+  </section>
+
+  <!-- ================= AKUN ================= -->
+  <section id="pg-akun">
+    <div class="card">
+      <h3>Profil Pemain</h3>
+      <div class="fld">
+        <label>Nama pemain</label>
+        <input id="playerName" maxlength="24" placeholder="Masukkan nama Anda">
+      </div>
+      <div class="grid3" style="margin-top:12px">
+        <div class="stat"><b id="aCoins">0</b><span>Total koin</span></div>
+        <div class="stat"><b id="aWd">0</b><span>Penarikan</span></div>
+        <div class="stat"><b id="aStreak">1</b><span>Hari beruntun</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Visi</h3>
+      <ol class="vm">
+        <li>Menjadi ekosistem game digital terdepan yang mengubah aktivitas bermain menjadi sumber penghasilan nyata secara produktif.</li>
+        <li>Mewujudkan kemandirian finansial berbasis digital bagi pengguna melalui aksesibilitas game penghasil uang yang transparan dan terpercaya.</li>
+        <li>Menciptakan platform digital gaming yang adil, konsisten, dan memberikan nilai ekonomi berkelanjutan bagi komunitas pengguna.</li>
+        <li>Menjadi pelopor layanan gamifikasi keuangan yang memudahkan masyarakat memperoleh pendapatan tambahan harian secara mudah dan efisien.</li>
+        <li>Membangun komunitas gamers digital yang cerdas, mandiri secara finansial, dan mampu memaksimalkan peluang ekonomi digital.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Misi</h3>
+      <ol class="vm">
+        <li>Menyediakan sistem perolehan koin yang konsisten dan terukur.</li>
+        <li>Memastikan setiap pengguna dapat mengumpulkan target harian minimal 10 koin secara stabil melalui aktivitas game yang menyenangkan.</li>
+        <li>Menjamin proses pencairan dana (cashout) yang mudah, cepat, dan transparan.</li>
+        <li>Memberikan kemudahan penarikan setelah memenuhi batas minimum tanpa biaya tersembunyi.</li>
+        <li>Mengembangkan fitur dan permainan digital yang inovatif serta mudah diakses.</li>
+        <li>Menyajikan antarmuka yang ramah pengguna (user-friendly) dan variasi tantangan harian agar target 1.500 koin dapat dicapai dengan efektif.</li>
+        <li>Menjaga keamanan dan keadilan sistem konversi nilai koin (25 koin = Rp625.000) serta keamanan transaksi digital.</li>
+        <li>Memberikan panduan serta dukungan layanan yang responsif untuk membantu pengguna memaksimalkan pencapaian koin harian dan proses penarikan.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Data &amp; Privasi</h3>
+      <p class="small mut" style="line-height:1.7">Seluruh progres (koin, misi, riwayat) disimpan hanya di perangkat Anda (localStorage) dan tidak dikirim ke server mana pun. Anda dapat menghapus seluruh data kapan saja.</p>
+      <button class="btn ghost" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(248,113,113,.4)" onclick="resetData()">Hapus Semua Data</button>
+    </div>
+  </section>
+</div>
+
+<!-- ====== NAV BAWAH ====== -->
+<nav class="nav">
+  <div class="app">
+    <button data-pg="beranda" class="on" onclick="go('beranda')">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Beranda
+    </button>
+    <button data-pg="misi" onclick="go('misi')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>Misi
+    </button>
+    <button data-pg="tarik" onclick="go('tarik')">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg>Tarik Dana
+    </button>
+    <button data-pg="akun" onclick="go('akun')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>Akun
+    </button>
+  </div>
+</nav>
+
+<!-- ====== GAME: LUCKY SPIN ====== -->
+<div class="gmodal" id="gmSpin">
+  <div class="ghead"><b>Lucky Spin</b><span class="small mut" id="spinLeft"></span><button class="xbtn" onclick="closeSpin()">×</button></div>
+  <div style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:10px 16px 24px">
+    <div class="wheelWrap">
+      <div class="wheel-pointer"></div>
+      <div id="wheelRot"></div>
+      <button class="hub" id="spinBtn" onclick="doSpin()">SPIN</button>
+    </div>
+    <p class="small mut">Tekan tombol SPIN di tengah roda</p>
+    <div id="spinInfo" style="margin-top:14px;text-align:center;font-weight:800;min-height:24px;color:#a5f3fc"></div>
+    <div class="note" style="align-self:stretch">Kesempatan spin: <b>5x per hari</b>. Hadiah koin langsung masuk ke saldo dan dihitung dalam target harian.</div>
+  </div>
+</div>
+
+<!-- ====== GAME: TEBAK KARTU ====== -->
+<div class="gmodal" id="gmCards">
+  <div class="ghead"><b>Tebak Kartu AS</b><span class="small mut" id="cardRound"></span><button class="xbtn" onclick="closeCards()">×</button></div>
+  <div style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:8px 16px 24px">
+    <div class="cardMsg" id="cardMsg"></div>
+    <div class="cardTable" id="cardTable"></div>
+    <div id="cardEnd" style="display:none;text-align:center;margin-top:6px">
+      <p style="font-weight:900;font-size:17px" id="cardEndTxt"></p>
+      <button class="btn" style="margin-top:14px" onclick="closeCards()">Selesai</button>
+    </div>
+    <div class="note" style="align-self:stretch;margin-top:10px">Ron 1: +5 koin • Ron 2: +8 koin • Ron 3: +12 koin. Kecepatan acak meningkat tiap ronde. Maksimal <b>3x main per hari</b>.</div>
+  </div>
+</div>
+
+<!-- ====== GAME: PESAWAT ANTARIKSA ====== -->
+<div class="gmodal" id="gmShip">
+  <div class="ghead"><b>Pesawat Antariksa</b><button class="xbtn" onclick="closeShip()">×</button></div>
+  <div class="shipHud">
+    <span>Skor: <span id="hudScore">0</span></span>
+    <span>Koin: <span id="hudCoins" style="color:var(--gold)">0</span></span>
+    <span>Nyawa: <span id="hudLives"></span></span>
+  </div>
+  <div class="shipArea">
+    <div style="position:relative;display:flex">
+      <canvas id="shipCanvas" width="360" height="560"></canvas>
+      <div class="shipOvl on" id="shipStart">
+        <div>
+          <p style="font-weight:900;font-size:18px">Siap terbang?</p>
+          <p class="small mut" style="margin:8px 0 16px;line-height:1.6">Geser / tombol kiri-kanan untuk bergerak.<br>Tembakan otomatis. Koin jatuh dari musuh.<br>Sesi tersisa hari ini: <b id="shipLeft" style="color:#a5f3fc">3</b></p>
+          <button class="btn" onclick="startShip()">Mulai</button>
+        </div>
+      </div>
+      <div class="shipOvl" id="shipOver">
+        <div>
+          <p style="font-weight:900;font-size:18px">Misi Selesai</p>
+          <p class="small" style="margin-top:10px;line-height:1.8">
+            Skor: <b id="ovScore">0</b><br>Musuh dihancurkan: <b id="ovKills">0</b><br>
+            Koin diraih: <b id="ovCoins" style="color:var(--gold)">0</b>
+          </p>
+          <div class="row" style="justify-content:center;margin-top:16px">
+            <button class="btn" onclick="claimShip()">Klaim Koin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL KONFIRMASI WD ====== -->
+<div class="ovl" id="ovlConfirm">
+  <div class="modal">
+    <h2>Konfirmasi Penarikan</h2>
+    <div id="cfSummary" style="margin:12px 0;font-size:13.5px;line-height:1.9"></div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" style="flex:1" id="btnCfCancel" onclick="closeConfirm()">Batal</button>
+      <button class="btn" style="flex:1" id="btnCfOk" onclick="okConfirm()">Proses</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL SUKSES WD ====== -->
+<div class="ovl" id="ovlSuccess">
+  <div class="modal" style="text-align:center">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(52,211,153,.15);border:1.5px solid var(--ok);
+      margin:4px auto 12px;display:flex;align-items:center;justify-content:center">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.4" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2>Penarikan Berhasil (Simulasi)</h2>
+    <canvas id="qrCanvas" width="150" height="150" style="display:none;border-radius:10px;margin:14px auto 4px"></canvas>
+    <div id="sucDetail" style="font-size:13px;line-height:1.9;margin-top:10px"></div>
+    <button class="btn" style="width:100%;margin-top:16px" onclick="closeSuccess()">Selesai</button>
+  </div>
+</div>
+
+<div id="toast"><span class="coin-dot"></span><span id="toastTxt"></span></div>
+
+<script>
+/* ================= KONSTANTA & UTIL ================= */
+var KOIN_RP = 25000;          // 1 koin = Rp25.000
+var MIN_TARIK = 25;           // minimal 25 koin (Rp625.000)
+var TARGET_HARIAN = 1500;
+var LS = 'neocoin_v1';
+
+function fmt(n){ return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function rp(koin){ return 'Rp' + fmt(koin * KOIN_RP); }
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function $(id){ return document.getElementById(id); }
+
+var toastTimer=null;
+function toast(msg){
+  $('toastTxt').textContent = msg;
+  $('toast').classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ $('toast').classList.remove('on'); }, 2600);
+}
+
+/* ================= STATE ================= */
+function defaultState(){
+  return {
+    coins: 30, name: '', streak: 1, date: todayStr(), lastActive: todayStr(),
+    today: { spins:0, cardPlays:0, cardWins:0, shipSessions:0, shipBest:0, earned:0 },
+    claimed: {}, wdCount: 0, history: []
+  };
+}
+var s;
+function load(){
+  try{
+    var raw = localStorage.getItem(LS);
+    s = raw ? JSON.parse(raw) : defaultState();
+  }catch(e){ s = defaultState(); }
+  checkDay();
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(s)); }catch(e){} }
+function checkDay(){
+  var t = todayStr();
+  if(s.date !== t){
+    var yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    var yStr = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+    s.streak = (s.lastActive === yStr) ? (s.streak + 1) : 1;
+    s.date = t; s.lastActive = t;
+    s.today = { spins:0, cardPlays:0, cardWins:0, shipSessions:0, shipBest:0, earned:0 };
+    s.claimed = {};
+    save();
+  } else {
+    s.lastActive = t; save();
+  }
+}
+
+function addCoins(n, src){
+  if(n <= 0) return;
+  s.coins += n;
+  s.today.earned += n;
+  save();
+  toast('+' + n + ' koin — ' + src);
+  renderAll();
+}
+
+/* ================= NAVIGASI ================= */
+function go(pg){
+  var ids = ['beranda','misi','tarik','akun'];
+  ids.forEach(function(p){
+    $('pg-'+p).classList.toggle('on', p === pg);
+  });
+  document.querySelectorAll('.nav button').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-pg') === pg);
+  });
+  window.scrollTo({top:0});
+}
+
+/* ================= RENDER ================= */
+var MISSIONS = [
+  { id:'spin',    t:'Lakukan 5x Lucky Spin',            d:'Selesaikan 5 putaran roda hari ini',   target:5,    reward:20,  get:function(){return s.today.spins;} },
+  { id:'card',    t:'Tebak Kartu: 3 tebakan benar',     d:'Total ronde menang hari ini',          target:3,    reward:25,  get:function(){return s.today.cardWins;} },
+  { id:'ship',    t:'Skor 500 di Pesawat Antariksa',    d:'Rekor skor terbaik hari ini',          target:500,  reward:25,  get:function(){return s.today.shipBest;} },
+  { id:'earn100', t:'Kumpulkan 100 koin dari game',     d:'Total hasil game hari ini',            target:100,  reward:30,  get:function(){return s.today.earned;} },
+  { id:'earn1500',t:'Capai target harian 1.500 koin',   d:'Misi besar — hadiah spesial',          target:1500, reward:100, get:function(){return s.today.earned;} }
+];
+
+function renderTop(){ $('koinTop').textContent = fmt(s.coins); }
+
+function renderHome(){
+  $('heroCoins').textContent = fmt(s.coins);
+  $('heroRp').textContent = '≈ ' + rp(s.coins);
+  $('sSpin').textContent = (5 - s.today.spins) + '/5';
+  $('sCard').textContent = (3 - s.today.cardPlays) + '/3';
+  $('sShip').textContent = (3 - s.today.shipSessions) + '/3';
+  var pct = Math.min(100, s.today.earned / TARGET_HARIAN * 100);
+  $('homeDailyBar').style.width = pct + '%';
+  $('homeDailyTxt').textContent = fmt(s.today.earned) + ' / ' + fmt(TARGET_HARIAN);
+  var html = '';
+  MISSIONS.slice(0,3).forEach(function(m){
+    var v = Math.min(m.get(), m.target);
+    html += '<div class="mcard"><div class="t">'+m.t+'</div><div class="d">+'+m.reward+' koin bonus</div>' +
+      '<div class="mrow"><div class="bar"><i style="width:'+(v/m.target*100)+'%"></i></div>' +
+      '<span class="small mut">'+fmt(v)+'/'+fmt(m.target)+'</span></div></div>';
+  });
+  $('prevMissions').innerHTML = html;
+}
+
+function renderMisi(){
+  $('dailyTxt').textContent = fmt(s.today.earned) + ' / ' + fmt(TARGET_HARIAN);
+  $('dailyBar').style.width = Math.min(100, s.today.earned / TARGET_HARIAN * 100) + '%';
+  var html = '';
+  MISSIONS.forEach(function(m){
+    var v = Math.min(m.get(), m.target);
+    var done = m.get() >= m.target;
+    var claimed = !!s.claimed[m.id];
+    var right = '';
+    if(claimed) right = '<span class="st">Diklaim</span>';
+    else if(done) right = '<button class="btn small gold" data-claim="'+m.id+'">Klaim +'+m.reward+'</button>';
+    else right = '<span class="small mut">'+fmt(v)+'/'+fmt(m.target)+'</span>';
+    html += '<div class="mcard"><div class="t">'+m.t+'</div><div class="d">'+m.d+' • Bonus +'+m.reward+' koin</div>' +
+      '<div class="mrow"><div class="bar"><i style="width:'+(v/m.target*100)+'%"></i></div>'+right+'</div></div>';
+  });
+  $('missionList').innerHTML = html;
+}
+
+document.getElementById('missionList').addEventListener('click', function(e){
+  var b = e.target.closest('[data-claim]');
+  if(!b) return;
+  var id = b.getAttribute('data-claim');
+  var m = MISSIONS.find(function(x){ return x.id === id; });
+  if(!m || s.claimed[id] || m.get() < m.target) return;
+  s.claimed[id] = true;
+  addCoins(m.reward, 'Bonus misi');
+  renderMisi();
+});
+
+/* ================= GAME 1: LUCKY SPIN ================= */
+var SEGS = [{k:5},{k:10},{k:25},{k:15},{k:50},{k:5},{k:75},{k:100}];
+var WEIGHT = {5:3, 10:3, 15:2, 25:2, 50:1, 75:1, 100:1};
+var segColors = ['#7c3aed','#0891b2','#9333ea','#0e7490'];
+var rot = 0, spinning = false, wheelBuilt = false;
+
+function buildWheel(){
+  if(wheelBuilt) return;
+  var w = $('wheelRot');
+  w.style.background = 'conic-gradient(' + SEGS.map(function(sg,i){
+    return segColors[i % 4] + ' ' + (i*45) + 'deg ' + ((i+1)*45) + 'deg';
+  }).join(',') + ')';
+  SEGS.forEach(function(sg,i){
+    var el = document.createElement('div');
+    el.className = 'seglabel';
+    el.textContent = sg.k;
+    el.style.transform = 'rotate(' + (i*45 + 22.5) + 'deg) translateY(-102px)';
+    w.appendChild(el);
+  });
+  wheelBuilt = true;
+}
+function openSpin(){
+  checkDay(); buildWheel();
+  $('gmSpin').classList.add('on'); document.body.classList.add('lock');
+  renderSpin();
+}
+function closeSpin(){
+  if(spinning){ toast('Tunggu roda berhenti'); return; }
+  $('gmSpin').classList.remove('on'); document.body.classList.remove('lock');
+}
+function renderSpin(){
+  $('spinLeft').textContent = 'Sisa ' + (5 - s.today.spins) + '/5';
+  $('spinBtn').disabled = spinning || s.today.spins >= 5;
+  if(s.today.spins >= 5) $('spinInfo').textContent = 'Kesempatan spin hari ini sudah habis. Kembali besok!';
+}
+function doSpin(){
+  if(spinning || s.today.spins >= 5) return;
+  spinning = true;
+  s.today.spins++;
+  // pilih segmen berbobot
+  var pool = [];
+  SEGS.forEach(function(sg,i){
+    for(var j=0; j<(WEIGHT[sg.k]||1); j++) pool.push(i);
+  });
+  var idx = pool[Math.floor(Math.random() * pool.length)];
+  var target = ((360 - (idx*45 + 22.5)) % 360 + 360) % 360;
+  var delta = (target - (rot % 360) + 360) % 360;
+  rot += 360*5 + delta;
+  $('wheelRot').style.transform = 'rotate(' + rot + 'deg)';
+  $('spinInfo').textContent = '';
+  renderSpin();
+  setTimeout(function(){
+    spinning = false;
+    addCoins(SEGS[idx].k, 'Lucky Spin');
+    $('spinInfo').textContent = 'Anda mendapat +' + SEGS[idx].k + ' koin!';
+    renderSpin(); save();
+  }, 4400);
+}
+
+/* ================= GAME 2: TEBAK KARTU ================= */
+var POS = [8, 108, 208];
+var RREWARD = [5, 8, 12];
+var cards = [], cg = null;
+
+function buildCards(){
+  var tb = $('cardTable');
+  tb.innerHTML = '';
+  cards = [];
+  for(var i=0; i<3; i++){
+    var c = document.createElement('div');
+    c.className = 'pcard';
+    c.innerHTML = '<div class="inner"><div class="face cover"></div><div class="face logo"></div></div>';
+    c.dataset.slot = i;
+    c.addEventListener('click', function(){ pickCard(this); });
+    tb.appendChild(c);
+    cards.push(c);
+  }
+}
+function place(c){ c.style.left = POS[+c.dataset.slot] + 'px'; }
+function allFaces(txt){
+  cards.forEach(function(c){
+    c.querySelector('.logo').textContent = txt;
+  });
+}
+function openCards(){
+  checkDay();
+  if(s.today.cardPlays >= 3){ toast('Kesempatan Tebak Kartu hari ini sudah habis'); return; }
+  $('gmCards').classList.add('on'); document.body.classList.add('lock');
+  buildCards();
+  s.today.cardPlays++;
+  save();
+  cg = { round:1, wins:0, total:0, busy:true, targetEl:null };
+  $('cardEnd').style.display = 'none';
+  setupRound();
+}
+function setupRound(){
+  $('cardRound').textContent = 'Ronde ' + cg.round + '/3';
+  $('cardMsg').textContent = 'Perhatikan kartu AS...';
+  // posisi acak awal
+  var slots = [0,1,2];
+  slots.sort(function(){ return Math.random() - 0.5; });
+  cards.forEach(function(c,i){ c.dataset.slot = slots[i]; place(c); c.classList.remove('flip','hint','good','badd'); });
+  allFaces('?');
+  var tEl = cards[Math.floor(Math.random()*3)];
+  cg.targetEl = tEl;
+  tEl.querySelector('.logo').textContent = 'A♠';
+  setTimeout(function(){ tEl.classList.add('flip','hint'); }, 700);
+  setTimeout(function(){
+    tEl.classList.remove('flip','hint');
+    $('cardMsg').textContent = 'Kartu akan diacak...';
+  }, 2300);
+  setTimeout(shufflePhase, 2900);
+}
+function shufflePhase(){
+  var swaps = 5 + cg.round * 3;            // 8 / 11 / 14
+  var speed = Math.max(180, 400 - cg.round * 90); // 310 / 220 / 180
+  var done = 0;
+  var iv = setInterval(function(){
+    var a = cards[Math.floor(Math.random()*3)];
+    var b = cards[Math.floor(Math.random()*3)];
+    if(a === b) return;
+    var t = a.dataset.slot; a.dataset.slot = b.dataset.slot; b.dataset.slot = t;
+    place(a); place(b);
+    done++;
+    if(done >= swaps){
+      clearInterval(iv);
+      setTimeout(function(){
+        cg.busy = false;
+        $('cardMsg').textContent = 'Klik kartu yang berisi AS!';
+      }, 400);
+    }
+  }, speed);
+}
+function pickCard(el){
+  if(cg.busy) return;
+  cg.busy = true;
+  el.classList.add('flip');
+  var win = (el === cg.targetEl);
+  setTimeout(function(){
+    cg.targetEl.classList.add('flip');
+    if(win){
+      el.classList.add('good');
+      var rw = RREWARD[cg.round - 1];
+      cg.wins++; cg.total += rw;
+      s.today.cardWins++;
+      save();
+      $('cardMsg').textContent = 'Benar! +' + rw + ' koin';
+      addCoins(rw, 'Tebak Kartu');
+    } else {
+      el.classList.add('badd');
+      $('cardMsg').textContent = 'Salah — AS ada di kartu lain.';
+    }
+    setTimeout(function(){
+      if(cg.round < 3){ cg.round++; setupRound(); }
+      else {
+        $('cardRound').textContent = 'Selesai';
+        $('cardEndTxt').textContent = 'Tebakan benar ' + cg.wins + '/3 • Total +' + cg.total + ' koin';
+        $('cardEnd').style.display = 'block';
+        $('cardMsg').textContent = '';
+      }
+    }, 1500);
+  }, 450);
+}
+function closeCards(){
+  $('gmCards').classList.remove('on'); document.body.classList.remove('lock');
+  cg = null;
+}
+
+/* ================= GAME 3: PESAWAT ANTARIKSA ================= */
+var W = 360, H = 560;
+var cv, ctx, raf = null, playing = false, shipOpen = false;
+var player, bullets, enemies, drops, stars, score, kills, runCoins, lives, invUntil, lastShot, lastSpawn, spawnIv, claimedShip, keys = {};
+
+function initShipCanvas(){
+  cv = $('shipCanvas');
+  ctx = cv.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cv.addEventListener('pointermove', shipMove);
+  cv.addEventListener('pointerdown', shipMove);
+  window.addEventListener('keydown', function(e){
+    if(!shipOpen) return;
+    if(['ArrowLeft','ArrowRight','a','d','A','D',' '].indexOf(e.key) >= 0) e.preventDefault();
+    keys[e.key] = true;
+  });
+  window.addEventListener('keyup', function(e){ keys[e.key] = false; });
+}
+function shipMove(e){
+  if(!playing) return;
+  var rect = cv.getBoundingClientRect();
+  player.x = (e.clientX - rect.left) / rect.width * W;
+  player.x = Math.max(20, Math.min(W - 20, player.x));
+}
+function openShip(){
+  checkDay();
+  if(s.today.shipSessions >= 3){ toast('Sesi Pesawat hari ini sudah habis'); return; }
+  if(!cv) initShipCanvas();
+  shipOpen = true;
+  $('gmShip').classList.add('on'); document.body.classList.add('lock');
+  $('shipLeft').textContent = (3 - s.today.shipSessions);
+  $('shipStart').classList.add('on');
+  $('shipOver').classList.remove('on');
+  drawIdle();
+}
+function drawIdle(){
+  ctx.fillStyle = '#05070f'; ctx.fillRect(0,0,W,H);
+}
+function startShip(){
+  if(s.today.shipSessions >= 3){ toast('Sesi hari ini sudah habis'); return; }
+  s.today.shipSessions++; save();
+  player = { x: W/2, y: H - 64 };
+  bullets = []; enemies = []; drops = [];
+  stars = [];
+  for(var i=0;i<60;i++) stars.push({ x: Math.random()*W, y: Math.random()*H, v: 0.4 + Math.random()*1.2, tw: Math.random()*Math.PI*2 });
+  score = 0; kills = 0; runCoins = 0; lives = 3; invUntil = 0; claimedShip = false;
+  lastShot = 0; lastSpawn = 0; spawnIv = 700;
+  $('shipStart').classList.remove('on');
+  $('shipOver').classList.remove('on');
+  updateHud();
+  playing = true;
+  lastT = performance.now();
+  raf = requestAnimationFrame(loop);
+}
+var lastT = 0;
+function loop(t){
+  if(!playing) return;
+  var dt = Math.min(40, t - lastT); lastT = t;
+  update(dt, t);
+  draw(t);
+  raf = requestAnimationFrame(loop);
+}
+function update(dt, t){
+  // gerak keyboard
+  var sp = 0.34 * dt;
+  if(keys['ArrowLeft'] || keys['a'] || keys['A']) player.x -= sp;
+  if(keys['ArrowRight'] || keys['d'] || keys['D']) player.x += sp;
+  player.x = Math.max(20, Math.min(W - 20, player.x));
+  // tembak otomatis
+  if(t - lastShot > 300){ bullets.push({ x: player.x, y: player.y - 22 }); lastShot = t; }
+  // spawn musuh
+  if(t - lastSpawn > spawnIv){
+    enemies.push({ x: 24 + Math.random()*(W - 48), y: -18, vy: 1.15 + score/500 + Math.random()*0.5 });
+    lastSpawn = t;
+    spawnIv = Math.max(320, 700 - score / 15);
+  }
+  var i, j;
+  for(i = bullets.length-1; i >= 0; i--){
+    bullets[i].y -= 0.44 * dt;
+    if(bullets[i].y < -10) bullets.splice(i,1);
+  }
+  for(i = enemies.length-1; i >= 0; i--){
+    var e = enemies[i];
+    e.y += e.vy * dt / 16.7;
+    // tabrak peluru
+    for(j = bullets.length-1; j >= 0; j--){
+      if(Math.abs(bullets[j].x - e.x) < 22 && Math.abs(bullets[j].y - e.y) < 24){
+        bullets.splice(j,1);
+        kills++; score += 25;
+        if(Math.random() < 0.35) drops.push({ x: e.x, y: e.y });
+        enemies.splice(i,1);
+        updateHud();
+        break;
+      }
+    }
+  }
+  for(i = enemies.length-1; i >= 0; i--){
+    var e2 = enemies[i];
+    if(e2.y > H + 24){ enemies.splice(i,1); continue; }
+    if(t > invUntil && Math.abs(e2.x - player.x) < 30 && Math.abs(e2.y - player.y) < 26){
+      enemies.splice(i,1);
+      lives--; invUntil = t + 1500;
+      updateHud();
+      if(lives <= 0){ endShip(); return; }
+    }
+  }
+  for(i = drops.length-1; i >= 0; i--){
+    var d = drops[i];
+    d.y += 0.11 * dt;
+    if(d.y > H + 14){ drops.splice(i,1); continue; }
+    if(Math.abs(d.x - player.x) < 26 && Math.abs(d.y - player.y) < 30){
+      drops.splice(i,1);
+      runCoins++;
+      updateHud();
+    }
+  }
+}
+function draw(t){
+  ctx.fillStyle = '#05070f'; ctx.fillRect(0,0,W,H);
+  // bintang
+  stars.forEach(function(st){
+    st.y += st.v; if(st.y > H) { st.y = -2; st.x = Math.random()*W; }
+    var a = 0.35 + 0.4 * Math.abs(Math.sin(t/700 + st.tw));
+    ctx.fillStyle = 'rgba(226,232,240,' + a.toFixed(2) + ')';
+    ctx.fillRect(st.x, st.y, 2, 2);
+  });
+  // koin
+  drops.forEach(function(d){
+    ctx.beginPath(); ctx.arc(d.x, d.y, 9, 0, Math.PI*2);
+    ctx.fillStyle = '#fbbf24'; ctx.fill();
+    ctx.fillStyle = '#7c2d12'; ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('K', d.x, d.y + 0.5);
+  });
+  // musuh
+  enemies.forEach(function(e){
+    ctx.beginPath(); ctx.arc(e.x, e.y, 13, 0, Math.PI*2);
+    ctx.fillStyle = '#f43f5e'; ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x, e.y, 6.5, 0, Math.PI*2);
+    ctx.fillStyle = '#881337'; ctx.fill();
+  });
+  // peluru
+  ctx.fillStyle = '#67e8f9';
+  bullets.forEach(function(b){ ctx.fillRect(b.x - 2, b.y - 9, 4, 13); });
+  // pemain
+  var blink = performance.now() < invUntil && Math.floor(performance.now()/120) % 2 === 0;
+  if(!blink){
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y - 18);
+    ctx.lineTo(player.x - 15, player.y + 14);
+    ctx.lineTo(player.x + 15, player.y + 14);
+    ctx.closePath();
+    ctx.fillStyle = '#22d3ee'; ctx.fill();
+    ctx.beginPath(); ctx.arc(player.x, player.y - 2, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#0e7490'; ctx.fill();
+  }
+}
+function updateHud(){
+  $('hudScore').textContent = score;
+  $('hudCoins').textContent = runCoins;
+  var h = '';
+  for(var i=0;i<3;i++) h += '<span class="life'+(i < lives ? ' on' : '')+'"></span>';
+  $('hudLives').innerHTML = h;
+}
+function endShip(){
+  playing = false;
+  if(raf) cancelAnimationFrame(raf);
+  var bonus = Math.floor(kills / 4);
+  shipEarnTotal = runCoins + bonus;
+  $('ovScore').textContent = fmt(score);
+  $('ovKills').textContent = fmt(kills);
+  $('ovCoins').textContent = '+' + shipEarnTotal + ' koin (termasuk bonus ' + bonus + ')';
+  if(score > s.today.shipBest){ s.today.shipBest = score; save(); }
+  $('shipOver').classList.add('on');
+}
+var shipEarnTotal = 0;
+function claimShip(){
+  if(claimedShip) return;
+  claimedShip = true;
+  if(shipEarnTotal > 0) addCoins(shipEarnTotal, 'Pesawat Antariksa');
+  $('shipOver').classList.remove('on');
+  closeShip();
+}
+function closeShip(){
+  if(playing){ toast('Selesaikan sesi terlebih dahulu'); return; }
+  if($('shipOver').classList.contains('on') && !claimedShip && shipEarnTotal > 0){
+    addCoins(shipEarnTotal, 'Pesawat Antariksa');
+  }
+  playing = false;
+  if(raf) cancelAnimationFrame(raf);
+  shipOpen = false;
+  $('gmShip').classList.remove('on'); document.body.classList.remove('lock');
+}
+
+/* ================= TARIK DANA ================= */
+var METHODS = [
+  { id:'dana',      name:'DANA',      badge:'DANA',  color:'#118eea', type:'ewallet', field:'Nomor HP terdaftar di DANA', ph:'08xxxxxxxxxx' },
+  { id:'ovo',       name:'OVO',       badge:'OVO',   color:'#814097', type:'ewallet', field:'Nomor HP terdaftar di OVO',  ph:'08xxxxxxxxxx' },
+  { id:'gopay',     name:'GoPay',     badge:'GOPAY', color:'#00aed6', type:'ewallet', field:'Nomor HP terdaftar di GoPay',ph:'08xxxxxxxxxx' },
+  { id:'shopeepay', name:'ShopeePay', badge:'SHP',   color:'#ee4d2d', type:'ewallet', field:'Nomor HP terdaftar di ShopeePay', ph:'08xxxxxxxxxx' },
+  { id:'paypal',    name:'PayPal',    badge:'PP',    color:'#003087', type:'email',   field:'Email akun PayPal', ph:'nama@email.com' },
+  { id:'qris',      name:'QRIS',      badge:'QRIS',  color:'#ce2029', type:'qris' },
+  { id:'bank',      name:'Transfer Bank', badge:'BANK', color:'#334155', type:'bank',
+      banks:['BCA','BRI','Mandiri','BNI','CIMB Niaga','BSI','Permata','Danamon'] },
+  { id:'indomaret', name:'Indomaret', badge:'IDM',   color:'#0066b3', type:'retail', field:'Nama lengkap sesuai ID', ph:'Nama Anda' },
+  { id:'alfamart',  name:'Alfamart',  badge:'ALFA',  color:'#dc2626', type:'retail', field:'Nama lengkap sesuai ID', ph:'Nama Anda' },
+  { id:'alfamidi',  name:'Alfamidi',  badge:'AFM',   color:'#0891b2', type:'retail', field:'Nama lengkap sesuai ID', ph:'Nama Anda' }
+];
+var selMethod = null, pendingWd = null;
+
+function renderMethods(){
+  var html = '';
+  METHODS.forEach(function(m){
+    html += '<button class="mbtn" data-mid="'+m.id+'"><span class="mi" style="background:'+m.color+'">'+m.badge+'</span>'+m.name+'</button>';
+  });
+  $('methodGrid').innerHTML = html;
+}
+document.getElementById('methodGrid').addEventListener('click', function(e){
+  var b = e.target.closest('[data-mid]');
+  if(!b) return;
+  var m = METHODS.find(function(x){ return x.id === b.getAttribute('data-mid'); });
+  selMethod = m;
+  document.querySelectorAll('.mbtn').forEach(function(x){ x.classList.remove('sel'); });
+  b.classList.add('sel');
+  buildWdForm(m);
+});
+function buildWdForm(m){
+  $('wdFormCard').style.display = 'block';
+  $('wdFormTitle').textContent = '2. Data Tujuan — ' + m.name;
+  var f = '';
+  if(m.type === 'ewallet' || m.type === 'email' || m.type === 'retail'){
+    f = '<div class="fld"><label>'+m.field+'</label><input id="wdF1" placeholder="'+m.ph+'"></div>';
+    if(m.type === 'retail'){
+      f += '<div class="fld"><label>Nomor HP konfirmasi kasir</label><input id="wdF2" placeholder="08xxxxxxxxxx"></div>';
+    }
+  } else if(m.type === 'bank'){
+    var opts = m.banks.map(function(b){ return '<option>'+b+'</option>'; }).join('');
+    f = '<div class="fld"><label>Bank</label><select id="wdF1">'+opts+'</select></div>' +
+        '<div class="fld"><label>Nomor rekening</label><input id="wdF2" placeholder="1234567890"></div>' +
+        '<div class="fld"><label>Nama pemilik rekening</label><input id="wdF3" placeholder="Sesuai buku tabungan"></div>';
+  } else if(m.type === 'qris'){
+    f = '<p class="small mut" style="line-height:1.7">Pastikan aplikasi e-wallet / m-banking Anda mendukung QRIS. Kode QR pembayaran akan ditampilkan setelah pengajuan (simulasi).</p>';
+  }
+  $('wdForm').innerHTML = f;
+  $('wdMsg').style.display = 'none';
+  $('wdFormCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+function submitWd(){
+  var msg = $('wdMsg');
+  function fail(t){ msg.textContent = t; msg.style.display = 'block'; $('wdFormCard').classList.add('shake'); setTimeout(function(){ $('wdFormCard').classList.remove('shake'); }, 450); }
+  if(!selMethod){ toast('Pilih metode penarikan dulu'); return; }
+  if(s.coins < MIN_TARIK){ fail('Saldo belum cukup. Minimal penarikan ' + MIN_TARIK + ' koin (Rp625.000). Anda punya ' + s.coins + ' koin.'); return; }
+  var v1 = ($('wdF1') ? $('wdF1').value.trim() : '');
+  var v2 = ($('wdF2') ? $('wdF2').value.trim() : '');
+  var dest = '';
+  if(selMethod.type === 'ewallet'){
+    if(!/^08\d{8,11}$/.test(v1)) return fail('Masukkan nomor HP valid (awali dengan 08, 10-13 digit).');
+    dest = v1;
+  } else if(selMethod.type === 'email'){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v1)) return fail('Masukkan alamat email yang valid.');
+    dest = v1;
+  } else if(selMethod.type === 'retail'){
+    if(v1.length < 3) return fail('Masukkan nama lengkap Anda.');
+    if(v2 && !/^08\d{8,11}$/.test(v2)) return fail('Nomor HP tidak valid.');
+    dest = v1;
+  } else if(selMethod.type === 'bank'){
+    if(!/^\d{6,18}$/.test(v2)) return fail('Nomor rekening harus 6-18 digit angka.');
+    dest = v1 + ' • ' + v2;
+  } else if(selMethod.type === 'qris'){
+    dest = 'QRIS Dynamic (otomatis)';
+  }
+  pendingWd = { coins: s.coins, dest: dest };
+  $('cfSummary').innerHTML =
+    'Jumlah: <b>' + fmt(pendingWd.coins) + ' koin</b><br>' +
+    'Setara: <b style="color:var(--gold)">' + rp(pendingWd.coins) + '</b><br>' +
+    'Metode: <b>' + selMethod.name + '</b><br>' +
+    'Tujuan: <b>' + dest + '</b><br>' +
+    'Biaya admin: <b>Rp0</b>';
+  $('btnCfOk').disabled = false;
+  $('btnCfOk').innerHTML = 'Proses';
+  $('ovlConfirm').classList.add('on');
+  document.body.classList.add('lock');
+}
+function closeConfirm(){
+  $('ovlConfirm').classList.remove('on'); document.body.classList.remove('lock');
+}
+function okConfirm(){
+  var b = $('btnCfOk');
+  b.disabled = true;
+  b.innerHTML = '<span class="spin"></span> Memproses...';
+  setTimeout(function(){
+    var amount = pendingWd.coins;
+    var id = 'WD-' + String(Date.now()).slice(-8);
+    s.coins -= amount;
+    s.wdCount++;
+    s.history.unshift({ id:id, ts:Date.now(), method:selMethod.name, dest:pendingWd.dest, coins:amount, status:'Berhasil' });
+    if(s.history.length > 20) s.history.length = 20;
+    save();
+    closeConfirm();
+    showSuccess(id, amount, selMethod, pendingWd.dest);
+    pendingWd = null;
+    renderAll();
+  }, 2200);
+}
+function showSuccess(id, amount, m, dest){
+  $('sucDetail').innerHTML =
+    'ID Transaksi: <b>' + id + '</b><br>' +
+    'Jumlah: <b>' + fmt(amount) + ' koin (' + rp(amount) + ')</b><br>' +
+    'Metode: <b>' + m.name + '</b><br>' +
+    'Tujuan: <b>' + dest + '</b><br>' +
+    '<span class="small mut">Status: Berhasil • Instan • Biaya Rp0</span>';
+  var qc = $('qrCanvas');
+  if(m.type === 'qris'){ qc.style.display = 'block'; drawQR(qc, parseInt(id.slice(3),10) || 12345); }
+  else qc.style.display = 'none';
+  $('ovlSuccess').classList.add('on');
+  document.body.classList.add('lock');
+}
+function closeSuccess(){
+  $('ovlSuccess').classList.remove('on'); document.body.classList.remove('lock');
+}
+function drawQR(canvas, seed){
+  var c = canvas.getContext('2d');
+  var n = 25, cell = Math.floor(canvas.width / n);
+  var sn = seed;
+  function rnd(){ sn = (sn * 9301 + 49297) % 233280; return sn / 233280; }
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, canvas.width, canvas.height);
+  c.fillStyle = '#0b0f1a';
+  for(var y = 0; y < n; y++){
+    for(var x = 0; x < n; x++){
+      if(rnd() < 0.44) c.fillRect(x*cell, y*cell, cell, cell);
+    }
+  }
+  function finder(fx, fy){
+    c.fillStyle = '#0b0f1a'; c.fillRect(fx*cell, fy*cell, 7*cell, 7*cell);
+    c.fillStyle = '#ffffff'; c.fillRect((fx+1)*cell, (fy+1)*cell, 5*cell, 5*cell);
+    c.fillStyle = '#0b0f1a'; c.fillRect((fx+2)*cell, (fy+2)*cell, 3*cell, 3*cell);
+  }
+  finder(0, 0); finder(n-7, 0); finder(0, n-7);
+}
+function renderHistory(){
+  var el = $('wdHistory');
+  if(!s.history.length){
+    el.innerHTML = '<p class="small mut">Belum ada penarikan. Kumpulkan minimal 25 koin untuk mulai menarik.</p>';
+    return;
+  }
+  var html = '';
+  s.history.forEach(function(h){
+    var d = new Date(h.ts);
+    var tgl = d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    html += '<div class="hitem"><div><b>'+h.method+' • '+fmt(h.coins)+' koin</b>' +
+      '<span class="small">'+h.dest+' • '+tgl+' • '+h.id+'</span></div>' +
+      '<span class="st">'+h.status+'</span></div>';
+  });
+  el.innerHTML = html;
+}
+
+/* ================= AKUN ================= */
+function renderAkun(){
+  $('playerName').value = s.name || '';
+  $('aCoins').textContent = fmt(s.coins);
+  $('aWd').textContent = fmt(s.wdCount);
+  $('aStreak').textContent = fmt(s.streak);
+}
+
+function renderTarik(){
+  $('wdCoins').textContent = fmt(s.coins);
+  $('wdRp').textContent = '≈ ' + rp(s.coins);
+  renderHistory();
+}
+
+function renderAll(){
+  renderTop(); renderHome(); renderMisi(); renderTarik(); renderAkun();
+}
+
+/* ================= RESET & INTRO ================= */
+function resetData(){
+  if(confirm('Hapus semua data (koin, misi, riwayat) dari perangkat ini?')){
+    localStorage.removeItem(LS);
+    location.reload();
+  }
+}
+function ackIntro(){
+  try{ localStorage.setItem(LS + '_ack', '1'); }catch(e){}
+  $('ovlIntro').classList.remove('on');
+  document.body.classList.remove('lock');
+}
+
+/* ================= INIT ================= */
+document.getElementById('playerName').addEventListener('change', function(){
+  s.name = this.value.trim(); save();
+});
+load();
+renderMethods();
+renderAll();
+if(localStorage.getItem(LS + '_ack') === '1'){
+  $('ovlIntro').classList.remove('on');
+} else {
+  document.body.classList.add('lock');
+}
+</script>
+</body>
+</html>
